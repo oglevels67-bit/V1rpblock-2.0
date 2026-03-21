@@ -1,0 +1,1471 @@
+-- Part 1/10
+local playersService = game:GetService("Players")
+local lightingService = game:GetService("Lighting")
+local userInputService = game:GetService("UserInputService")
+local runService = game:GetService("RunService")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local materialService = game:GetService("MaterialService")
+local workspaceService = game:GetService("Workspace")
+local statsService = game:GetService("Stats")
+local debrisService = game:GetService("Debris")
+local textChatService = game:GetService("TextChatService")
+local tweenService = game:GetService("TweenService")
+
+local clientPlayer = playersService.LocalPlayer
+local PlayerGui = clientPlayer:WaitForChild("PlayerGui", 10)
+
+local fs = {
+    hasFolder = isfolder or function() return false end,
+    makeFolder = makefolder or function() end,
+    write = writefile or function() end,
+    hasFile = isfile or function() return false end,
+    read = readfile or function() return "" end,
+    asset = getcustomasset or function(p) return p end
+}
+local cfg = {}
+do
+    local DIR = "V1rpWare2.0"
+    local FILE = DIR.."/config.json"
+    local function prep() if not fs.hasFolder(DIR) then fs.makeFolder(DIR) end end
+    function cfg.load() prep() if not fs.hasFile(FILE) then return end local ok,t=pcall(game:GetService("HttpService").JSONDecode,game:GetService("HttpService"),fs.read(FILE)) if ok and type(t)=="table" then cfg._data=t end end
+    function cfg.save() prep() local ok,s=pcall(game:GetService("HttpService").JSONEncode,game:GetService("HttpService"),cfg._data) if ok then fs.write(FILE,s) end end
+    function cfg.get(k,default) local v=cfg._data[k] return v~=nil and v or default end
+    function cfg.set(k,v) cfg._data[k]=v cfg.save() end
+    cfg._data = {}
+    cfg.load()
+end
+
+local loaderGui = Instance.new("ScreenGui")
+loaderGui.Name = "Loader"
+loaderGui.Parent = PlayerGui
+loaderGui.IgnoreGuiInset = true
+loaderGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+loaderGui.DisplayOrder = 9999
+
+local loaderFrame = Instance.new("Frame")
+loaderFrame.Size = UDim2.new(1,0,1,0)
+loaderFrame.BackgroundColor3 = Color3.fromHex("#0a0a0a")
+loaderFrame.Parent = loaderGui
+
+local logo = Instance.new("ImageLabel")
+logo.Size = UDim2.new(0,100,0,100)
+logo.Position = UDim2.new(0.5,-50,0.4,-50)
+logo.BackgroundTransparency = 1
+logo.Image = "rbxassetid://6031075938"
+logo.Parent = loaderFrame
+logo.ImageTransparency = 1
+
+local loaderLabel = Instance.new("TextLabel")
+loaderLabel.Size = UDim2.new(0,600,0,100)
+loaderLabel.Position = UDim2.new(0.5,-300,0.6,-50)
+loaderLabel.BackgroundTransparency = 1
+loaderLabel.Text = "Remade By thelevelist"
+loaderLabel.TextColor3 = Color3.fromHex("#FFFFFF")
+loaderLabel.TextStrokeColor3 = Color3.fromHex("#000000")
+loaderLabel.TextStrokeTransparency = 0.2
+loaderLabel.TextSize = 60
+loaderLabel.Font = Enum.Font.GothamBold
+loaderLabel.TextScaled = true
+loaderLabel.RichText = true
+loaderLabel.Parent = loaderFrame
+loaderLabel.TextTransparency = 1
+
+local spin = Instance.new("Frame")
+spin.Size = UDim2.new(0,50,0,50)
+spin.Position = UDim2.new(0.5,-25,0.7,-25)
+spin.BackgroundColor3 = Color3.fromHex("#00FF00")
+spin.BackgroundTransparency = 0.5
+spin.Parent = loaderFrame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(1,0)
+corner.Parent = spin
+
+tweenService:Create(logo, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+tweenService:Create(loaderLabel, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+tweenService:Create(spin, TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true), {Rotation = 360}):Play()
+
+task.delay(3, function()
+    tweenService:Create(loaderFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {BackgroundTransparency = 1}):Play()
+    tweenService:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 1}):Play()
+    tweenService:Create(loaderLabel, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+    tweenService:Create(spin, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+    task.delay(0.5, function() loaderGui:Destroy() end)
+end)
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local RedBlackTheme = {
+    TextColor = Color3.fromRGB(255, 255, 255),
+    Background = Color3.fromRGB(0, 0, 0),
+    Topbar = Color3.fromRGB(20, 20, 20),
+    Shadow = Color3.fromRGB(0, 0, 0),
+    NotificationBackground = Color3.fromRGB(20, 20, 20),
+    NotificationActionsBackground = Color3.fromRGB(30, 30, 30),
+    TabBackground = Color3.fromRGB(15, 15, 15),
+    TabStroke = Color3.fromRGB(40, 40, 40),
+    TabBackgroundSelected = Color3.fromRGB(139, 0, 0),
+    TabTextColor = Color3.fromRGB(200, 200, 200),
+    SelectedTabTextColor = Color3.fromRGB(255, 255, 255),
+    ElementBackground = Color3.fromRGB(10, 10, 10),
+    ElementBackgroundHover = Color3.fromRGB(20, 20, 20),
+    SecondaryElementBackground = Color3.fromRGB(5, 5, 5),
+    ElementStroke = Color3.fromRGB(40, 40, 40),
+    SecondaryElementStroke = Color3.fromRGB(30, 30, 30),
+    SliderBackground = Color3.fromRGB(139, 0, 0),
+    SliderProgress = Color3.fromRGB(255, 0, 0),
+    SliderStroke = Color3.fromRGB(200, 0, 0),
+    ToggleBackground = Color3.fromRGB(20, 20, 20),
+    ToggleEnabled = Color3.fromRGB(139, 0, 0),
+    ToggleDisabled = Color3.fromRGB(50, 50, 50),
+    ToggleEnabledStroke = Color3.fromRGB(255, 0, 0),
+    ToggleDisabledStroke = Color3.fromRGB(80, 80, 80),
+    ToggleEnabledOuterStroke = Color3.fromRGB(139, 0, 0),
+    ToggleDisabledOuterStroke = Color3.fromRGB(40, 40, 40),
+    DropdownSelected = Color3.fromRGB(139, 0, 0),
+    DropdownUnselected = Color3.fromRGB(15, 15, 15),
+    InputBackground = Color3.fromRGB(10, 10, 10),
+    InputStroke = Color3.fromRGB(139, 0, 0),
+    PlaceholderColor = Color3.fromRGB(150, 150, 150),
+}
+
+local Window = Rayfield:CreateWindow({
+    Name = "V1rpblock 2.0",
+    Icon = 0,
+    LoadingTitle = "V1rpblock 2.0",
+    LoadingSubtitle = "by TheLevelist",
+    Theme = RedBlackTheme,
+    ToggleUIKeybind = "K",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false,
+    ConfigurationSaving = { Enabled = false },
+    Discord = { Enabled = false },
+    KeySystem = false,
+})
+-- Part 2/10
+local guestAutoBlockAudioOn = cfg.get("guestAutoBlockAudioOn", true)
+local guestAutoPunchOn = cfg.get("guestAutoPunchOn", true)
+local guestVerifyFacingCheckOn = cfg.get("guestVerifyFacingCheckOn", true)
+local guestShowVisionRange = cfg.get("guestShowVisionRange", true)
+local guestHitboxDraggingOn = cfg.get("guestHitboxDraggingOn", false)
+local guestHitboxDragDuration = cfg.get("guestHitboxDragDuration", 1.0)
+local guestHitboxTriggerRadius = cfg.get("guestHitboxTriggerRadius", 15)
+local guestShowHDTRange = cfg.get("guestShowHDTRange", false)
+local guestHitboxDragSpeed = cfg.get("guestHitboxDragSpeed", 150)
+local guestDetectionRange = cfg.get("guestDetectionRange", 20)
+local guestDetectionRangeSq = guestDetectionRange * guestDetectionRange
+local guestVisionRange = cfg.get("guestVisionRange", 13.5)
+local guestVisionAngle = cfg.get("guestVisionAngle", 85)
+local guestAimPunchActive = cfg.get("guestAimPunchActive", true)
+local guestPunchPrediction = cfg.get("guestPunchPrediction", 1.6)
+local guestAimPunchDuration = cfg.get("guestAimPunchDuration", 0.7)
+local guestBlockCooldown = cfg.get("guestBlockCooldown", 0.35)
+local guestBlockDelay = cfg.get("guestBlockDelay", 0)
+local guestHitboxMode = cfg.get("guestHitboxMode", "Blatant")
+local guestHitboxFaceKiller = cfg.get("guestHitboxFaceKiller", false)
+local guestHitboxVisual = cfg.get("guestHitboxVisual", false)
+local guestBetterDetectionEnabled = false
+local guestUseBlockBox = cfg.get("guestUseBlockBox", false)
+local guestBlockBoxSizeX = cfg.get("guestBlockBoxSizeX", 5)
+local guestBlockBoxSizeY = cfg.get("guestBlockBoxSizeY", 5)
+local guestBlockBoxSizeZ = cfg.get("guestBlockBoxSizeZ", 5)
+local guestBoxZForwardOnly = cfg.get("guestBoxZForwardOnly", false)
+local guestShowBlockBox = cfg.get("guestShowBlockBox", false)
+local guestExpandBoxOnTrigger = cfg.get("guestExpandBoxOnTrigger", false)
+local guestCinematicTextEnabled = cfg.get("guestCinematicTextEnabled", false)
+local guestCinematicText = cfg.get("guestCinematicText", "PARRY!")
+local guestSmartDelayEnabled = cfg.get("guestSmartDelayEnabled", false)
+local guestManualDragEnabled = cfg.get("guestManualDragEnabled", false)
+local noHDTCooldown = cfg.get("noHDTCooldown", false)
+local hdtCooldownChecker = cfg.get("hdtCooldownChecker", false)
+local hdtCooldownLabel = nil
+local hdtCooldownGui = nil
+local guestSphereModeEnabled = cfg.get("guestSphereModeEnabled", false)
+local guestSphereSize = cfg.get("guestSphereSize", 10)
+local guestShowSphere = cfg.get("guestShowSphere", true)
+local guestReverseEnabled = cfg.get("guestReverseEnabled", false)
+local guestLegacyFacingEnabled = cfg.get("guestLegacyFacingEnabled", false)
+local guestLegacyVisionRange = cfg.get("guestLegacyVisionRange", 13.5)
+local guestLegacyVisionAngle = cfg.get("guestLegacyVisionAngle", 85)
+local guestLegacyShowVisionRange = cfg.get("guestLegacyShowVisionRange", false)
+local pingCheckerEnabled = cfg.get("pingCheckerEnabled", false)
+local punchControlEnabled = cfg.get("punchControlEnabled", false)
+local chargeControlEnabled = cfg.get("chargeControlEnabled", false)
+local punchMobilityEnabled = cfg.get("punchMobilityEnabled", false)
+local lungeBoostEnabled = cfg.get("lungeBoostEnabled", false)
+local chargeSpeedCapEnabled = cfg.get("chargeSpeedCapEnabled", false)
+local lungeMultiplier = cfg.get("lungeMultiplier", 1.0)
+local chargeSpeedLimit = cfg.get("chargeSpeedLimit", 12)
+local isCharging = false
+local lungeActive = false
+local lungeThread = nil
+local networkHooked = false
+local originalFireConnection = nil
+local pinnedConns = {}
+local chargePinnedConns = {}
+local chargeCapConn = nil
+local chargeWatcher = nil
+local descendantConn = nil
+local noclipEnabled = cfg.get("noclipEnabled", false)
+local noclipConn = nil
+local fpsCounterEnabled = cfg.get("fpsCounterEnabled", false)
+local fpsLabel = nil
+local fpsGui = nil
+local lastFpsUpdate = 0
+local frameCount = 0
+local fps = 0
+local BASE_SPEED = 12
+local BASE_PUNCH_FORCE = 40
+local PUNCH_WINDUP = 0.7
+local PARRY_WINDUP = 0.4
+
+-- NEW: HDT target mode and sum noclip shi i added
+local guestHitboxTargetMode = cfg.get("guestHitboxTargetMode", "Root")
+local noclipOnlyWhenBlockReady = cfg.get("noclipOnlyWhenBlockReady", false)
+-- Part 3/10
+local function getHumanoid()
+    local c = clientPlayer.Character
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+
+local function getRootPart()
+    local c = clientPlayer.Character
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
+
+local function isParryMode()
+    local result = false
+    pcall(function()
+        local gui = PlayerGui:FindFirstChild("MainUI")
+        if not gui then return end
+        local container = gui:FindFirstChild("AbilityContainer")
+        if not container then return end
+        local punchUI = container:FindFirstChild("Punch")
+        if not punchUI then return end
+        local charges = punchUI:FindFirstChild("Charges")
+        if not charges then return end
+        local n = tonumber(charges.Text)
+        result = n ~= nil and n >= 1
+    end)
+    return result
+end
+
+local function updateHDTCooldownChecker()
+    if not hdtCooldownChecker then
+        if hdtCooldownGui then
+            hdtCooldownGui:Destroy()
+            hdtCooldownGui = nil
+        end
+        return
+    end
+    if not hdtCooldownGui then
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "HDTCooldownChecker"
+        screenGui.Parent = PlayerGui
+        screenGui.IgnoreGuiInset = true
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        screenGui.DisplayOrder = 9998
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 150, 0, 40)
+        frame.Position = UDim2.new(0, 10, 0, 100)
+        frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        frame.BackgroundTransparency = 0.5
+        frame.BorderSizePixel = 0
+        frame.Parent = screenGui
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)
+        corner.Parent = frame
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, -10, 1, -10)
+        textLabel.Position = UDim2.new(0, 5, 0, 5)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textLabel.Text = "Block CD: ?"
+        textLabel.Font = Enum.Font.GothamBold
+        textLabel.TextSize = 18
+        textLabel.Parent = frame
+        hdtCooldownGui = screenGui
+        hdtCooldownLabel = textLabel
+    end
+    local mainUI = PlayerGui:FindFirstChild("MainUI")
+    if mainUI then
+        local abilityContainer = mainUI:FindFirstChild("AbilityContainer")
+        if abilityContainer then
+            local block = abilityContainer:FindFirstChild("Block")
+            if block then
+                local cooldownTime = block:FindFirstChild("CooldownTime")
+                if cooldownTime and cooldownTime:IsA("TextLabel") then
+                    local val = cooldownTime.Text
+                    hdtCooldownLabel.Text = "Block CD: " .. val
+                else
+                    hdtCooldownLabel.Text = "Block CD: ?"
+                end
+            else
+                hdtCooldownLabel.Text = "Block CD: ?"
+            end
+        else
+            hdtCooldownLabel.Text = "Block CD: ?"
+        end
+    else
+        hdtCooldownLabel.Text = "Block CD: ?"
+    end
+end
+
+local function isBlockReady()
+    if noHDTCooldown then return true end
+    local mainUI = PlayerGui:FindFirstChild("MainUI")
+    if mainUI then
+        local abilityContainer = mainUI:FindFirstChild("AbilityContainer")
+        if abilityContainer then
+            local block = abilityContainer:FindFirstChild("Block")
+            if block then
+                local cooldownTime = block:FindFirstChild("CooldownTime")
+                if cooldownTime and cooldownTime:IsA("TextLabel") then
+                    local text = cooldownTime.Text
+                    local num = text:match("[%d%.]+")
+                    if num then
+                        local val = tonumber(num)
+                        if val and val <= 0 then
+                            return true
+                        else
+                            return false
+                        end
+                    else
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return true
+end
+
+local guestAutoBlockTriggerSounds = {
+    ["102228729296384"] = true, ["140242176732868"] = true, ["112809109188560"] = true, ["136323728355613"] = true,
+    ["115026634746636"] = true, ["84116622032112"] = true, ["108907358619313"] = true, ["127793641088496"] = true,
+    ["86174610237192"] = true, ["95079963655241"] = true, ["101199185291628"] = true, ["119942598489800"] = true,
+    ["84307400688050"] = true, ["113037804008732"] = true, ["105200830849301"] = true, ["75330693422988"] = true,
+    ["82221759983649"] = true, ["109348678063422"] = true, ["81702359653578"] = true, ["85853080745515"] = true,
+    ["108610718831698"] = true, ["112395455254818"] = true, ["109431876587852"] = true, ["12222216"] = true,
+    ["79980897195554"] = true, ["119583605486352"] = true, ["71834552297085"] = true, ["116581754553533"] = true,
+    ["86833981571073"] = true, ["110372418055226"] = true, ["105840448036441"] = true, ["86494585504534"] = true,
+    ["80516583309685"] = true, ["131406927389838"] = true, ["89004992452376"] = true, ["117231507259853"] = true,
+    ["101698569375359"] = true, ["101553872555606"] = true, ["140412278320643"] = true, ["106300477136129"] = true,
+    ["117173212095661"] = true, ["104910828105172"] = true, ["140194172008986"] = true, ["85544168523099"] = true,
+    ["114506382930939"] = true, ["99829427721752"] = true, ["120059928759346"] = true, ["104625283622511"] = true,
+    ["105316545074913"] = true, ["126131675979001"] = true, ["82336352305186"] = true, ["93366464803829"] = true,
+    ["84069821282466"] = true, ["128856426573270"] = true, ["121954639447247"] = true, ["128195973631079"] = true,
+    ["124903763333174"] = true, ["94317217837143"] = true, ["98111231282218"] = true, ["119089145505438"] = true,
+    ["136728245733659"] = true, ["71310583817000"] = true, ["107444859834748"] = true, ["76959687420003"] = true,
+    ["72425554233832"] = true, ["96594507550917"] = true, ["139996647355899"] = true, ["107345261604889"] = true,
+    ["127557531826290"] = true, ["108651070773439"] = true, ["74842815979546"] = true,
+    ["124397369810639"] = true, 
+    ["76467993976301"] = true, ["118493324723683"] = true, ["78298577002481"] = true, ["116527305931161"] = true,["5148302439"] = true, ["98675142200448"] = true, ["128367348686124"] = true, ["71805956520207"] = true, ["125213046326879"] = true,["84353899757208"] = true,
+    ["103684883268194"] = true,
+    ["109246041199659"] = true,
+    ["80540530406270"] = true,
+    ["139523195429581"] = true,
+    ["105204810054381"] = true,
+}
+-- Part 4/10
+local guestTrackedPunchAnimations = {
+    ["87259391926321"] = true, ["140703210927645"] = true, ["136007065400978"] = true, ["129843313690921"] = true,
+    ["86709774283672"] = true, ["108807732150251"] = true, ["138040001965654"] = true, ["86096387000557"] = true,
+    ["81905101227053"] = true, ["108807732150251"] = true, ["127777649118195"] = true, ["99100240941590"] = true,
+    ["92831180929659"] = true, ["112081768119093"] = true, ["117587689359268"] = true, ["91830732867282"] = true,
+    ["91730605416216"] = true, ["100184164753080"] = true, ["91730605416216"] = true,
+}
+
+local guestAimTargets = {"Slasher", "c00lkidd", "JohnDoe", "1x1x1x1", "Noli", "Sixer", "Nosferatu"}
+
+local guestHumanoid, guestHRP = nil, nil
+local guestPunchAiming = false
+local guestPunchLastTriggerTime = 0
+local guestOriginalWS, guestOriginalJP, guestOriginalAutoRotate = nil, nil, nil
+local guestAimConnection = nil
+local guestSoundHooks = {}
+local guestSoundBlockedUntil = {}
+local guestLastBlockTime = 0
+local guestAutoPunchDelay = 0.3
+local guestSoundBlockDuration = 0.5
+local guestRemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent")
+local guestKillerState = {}
+local PRED_SECONDS_FORWARD = 0.25
+local PRED_SECONDS_LATERAL = 0.18
+local PRED_MAX_FORWARD = 6
+local PRED_MAX_LATERAL = 4
+local ANG_TURN_MULTIPLIER = 0.6
+local SMOOTHING_LERP = 0.22
+local blockBoxPart = nil
+local spherePart = nil
+local hdtRangePart = nil
+local pingLabel = nil
+local cinematicGui = nil
+
+local function guestExtractNumericSoundId(sound)
+    if not sound then return nil end
+    local sid = tostring(sound.SoundId)
+    local num = sid:match("%d+")
+    if num then return num end
+    local hash = sid:match("[&%?]hash=([^&]+)")
+    if hash then return "&hash="..hash end
+    local path = sid:match("rbxasset://sounds/.+")
+    if path then return path end
+    return nil
+end
+
+local function guestGetSoundWorldPosition(sound)
+    if not sound then return nil end
+    if sound.Parent and sound.Parent:IsA("BasePart") then
+        return sound.Parent.Position, sound.Parent
+    end
+    if sound.Parent and sound.Parent:IsA("Attachment") and sound.Parent.Parent and sound.Parent.Parent:IsA("BasePart") then
+        return sound.Parent.Parent.Position, sound.Parent.Parent
+    end
+    local found = sound.Parent and sound.Parent:FindFirstChildWhichIsA("BasePart", true)
+    if found then return found.Position, found end
+    return nil, nil
+end
+
+local function guestGetCharacterFromDescendant(inst)
+    if not inst then return nil end
+    local model = inst:FindFirstAncestorOfClass("Model")
+    if model and model:FindFirstChildOfClass("Humanoid") then
+        local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+        if killersFolder and model:IsDescendantOf(killersFolder) then
+            return model
+        end
+    end
+    return nil
+end
+
+local function guestFireRemoteBlock()
+    guestRemoteEvent:FireServer("UseActorAbility", { [1] = buffer.fromstring("\3\5\0\0\0Block") })
+end
+
+local function guestFireRemotePunch()
+    guestRemoteEvent:FireServer("UseActorAbility", { [1] = buffer.fromstring("\3\5\0\0\0Punch") })
+end
+
+local function isPointInsidePart(part, point)
+    if not part or not point then return false end
+    local rel = part.CFrame:PointToObjectSpace(point)
+    local half = part.Size * 0.5
+    return math.abs(rel.X) <= half.X + 0.001 and math.abs(rel.Y) <= half.Y + 0.001 and math.abs(rel.Z) <= half.Z + 0.001
+end
+
+local function showCinematicText()
+    if not guestCinematicTextEnabled then return end
+    if cinematicGui then cinematicGui:Destroy() end
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "CinematicText"
+    gui.Parent = PlayerGui
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.DisplayOrder = 10000
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 0, 100)
+    textLabel.Position = UDim2.new(0, 0, 0.4, -50)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = guestCinematicText
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    textLabel.TextStrokeTransparency = 0.3
+    textLabel.TextSize = 60
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.TextScaled = true
+    textLabel.RichText = true
+    textLabel.Parent = gui
+    cinematicGui = gui
+    task.delay(1.5, function() if cinematicGui then cinematicGui:Destroy() end end)
+end
+-- Part 5/10
+local function guestPerformHitboxDrag(killerModel)
+    if not guestHitboxDraggingOn or not killerModel then return end
+
+    local targetPart
+
+    if guestHitboxMode == "Hitbox" then
+        local hitboxesFolder = killerModel:FindFirstChild("Hitboxes")
+        if hitboxesFolder then
+            for _, child in ipairs(hitboxesFolder:GetChildren()) do
+                if child:IsA("BasePart") then
+                    targetPart = child
+                    break
+                end
+            end
+        end
+        if not targetPart then
+            local globalHitboxes = workspaceService:FindFirstChild("Hitboxes")
+            if globalHitboxes then
+                for _, child in ipairs(globalHitboxes:GetChildren()) do
+                    if child:IsA("BasePart") then
+                        targetPart = child
+                        break
+                    end
+                end
+            end
+        end
+        if not targetPart then
+            for _, child in ipairs(killerModel:GetDescendants()) do
+                if child:IsA("BasePart") and child.Name:lower():find("hitbox") then
+                    targetPart = child
+                    break
+                end
+            end
+        end
+    end
+
+    -- NEW: Select target based on guestHitboxTargetMode
+    if not targetPart then
+        if guestHitboxTargetMode == "Arms" or guestHitboxTargetMode == "Random" then
+            local armNames = {"Right Arm", "Left Arm", "RightHand", "LeftHand", "RightUpperArm", "LeftUpperArm"}
+            local arms = {}
+            for _, name in ipairs(armNames) do
+                local arm = killerModel:FindFirstChild(name)
+                if arm and arm:IsA("BasePart") then
+                    table.insert(arms, arm)
+                end
+            end
+            if #arms > 0 then
+                if guestHitboxTargetMode == "Arms" then
+                    targetPart = arms[1]
+                elseif guestHitboxTargetMode == "Random" then
+                    if math.random() < 0.5 then
+                        targetPart = killerModel:FindFirstChild("HumanoidRootPart") or killerModel:FindFirstChild("Torso")
+                    else
+                        targetPart = arms[math.random(#arms)]
+                    end
+                end
+            end
+        end
+    end
+
+    if not targetPart then
+        targetPart = killerModel:FindFirstChild("HumanoidRootPart") or killerModel:FindFirstChild("Torso")
+    end
+
+    if not targetPart then
+        for _, child in ipairs(killerModel:GetDescendants()) do
+            if child:IsA("BasePart") then
+                targetPart = child
+                break
+            end
+        end
+    end
+    if not targetPart then return end
+
+    local myChar = clientPlayer.Character
+    local myHumanoid = myChar and myChar:FindFirstChild("Humanoid")
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myHumanoid or not myRoot then return end
+
+    local boostMultiplier = 1 + (guestHitboxDragSpeed / 100)
+    local targetSpeed = BASE_SPEED * boostMultiplier
+    local originalWalkSpeed = myHumanoid.WalkSpeed
+    local originalAutoRotate = myHumanoid.AutoRotate
+    myHumanoid.WalkSpeed = 0
+    myHumanoid.AutoRotate = false
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.new(0,0,0)
+    bodyVelocity.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    bodyVelocity.P = 100000
+    bodyVelocity.Parent = myRoot
+    local startTime = tick()
+    local dragConnection
+    local beam
+    if guestHitboxVisual then
+        beam = Instance.new("Part")
+        beam.Size = Vector3.new(0.5, 0.5, 0.5)
+        beam.Anchored = true
+        beam.CanCollide = false
+        beam.Transparency = 0.3
+        beam.Color = Color3.fromRGB(0, 255, 0)
+        beam.Parent = workspaceService
+        debrisService:AddItem(beam, guestHitboxDragDuration + 0.1)
+    end
+    Rayfield:Notify({ Title = "HDT", Content = "HDT activated for " .. guestHitboxDragDuration .. "s", Duration = 2 })
+    dragConnection = runService.Heartbeat:Connect(function()
+        local elapsed = tick() - startTime
+        if elapsed >= guestHitboxDragDuration or not guestHitboxDraggingOn or not targetPart or not targetPart.Parent or not myHumanoid or not myHumanoid.Parent then
+            dragConnection:Disconnect()
+            dragConnection = nil
+            bodyVelocity:Destroy()
+            myHumanoid.WalkSpeed = originalWalkSpeed
+            myHumanoid.AutoRotate = originalAutoRotate
+            return
+        end
+        local predictionTime = 0.15
+        local targetPos = targetPart.Position + targetPart.Velocity * predictionTime
+        if guestHitboxMode == "Legit" then
+            targetPos = targetPart.Position - (targetPart.CFrame.LookVector * 2)
+        end
+        local direction = (targetPos - myRoot.Position).Unit
+        bodyVelocity.Velocity = direction * targetSpeed
+        if guestHitboxFaceKiller then
+            local dir = (targetPart.Position - myRoot.Position).Unit
+            myRoot.CFrame = CFrame.lookAt(myRoot.Position, myRoot.Position + dir)
+        end
+        if beam then
+            beam.CFrame = CFrame.lookAt(myRoot.Position, targetPart.Position)
+            beam.Size = Vector3.new(0.5, 0.5, (myRoot.Position - targetPart.Position).Magnitude)
+        end
+    end)
+end
+
+local function updateBlockBox(killerHrp)
+    if not guestShowBlockBox or not guestUseBlockBox or not killerHrp then
+        if blockBoxPart then blockBoxPart:Destroy() blockBoxPart = nil end
+        return
+    end
+    if not blockBoxPart then
+        blockBoxPart = Instance.new("Part")
+        blockBoxPart.Anchored = true
+        blockBoxPart.CanCollide = false
+        blockBoxPart.Transparency = 0.4
+        blockBoxPart.Color = Color3.fromRGB(255, 0, 0)
+        blockBoxPart.Material = Enum.Material.ForceField
+        blockBoxPart.Parent = workspaceService
+    end
+    local size = Vector3.new(guestBlockBoxSizeX, guestBlockBoxSizeY, guestBlockBoxSizeZ)
+    if guestExpandBoxOnTrigger then size = size * 1.25 end
+    local center = guestReverseEnabled and guestHRP or killerHrp
+    local offset = guestBoxZForwardOnly and (guestReverseEnabled and guestHRP.CFrame.LookVector or killerHrp.CFrame.LookVector) * (size.Z/2) or Vector3.new()
+    blockBoxPart.Size = size
+    blockBoxPart.CFrame = CFrame.new(center.Position + offset) * CFrame.Angles(0, guestBoxZForwardOnly and 0 or (guestReverseEnabled and guestHRP.Orientation.Y or killerHrp.Orientation.Y), 0)
+end
+-- Part 6/10
+local function updateSphere()
+    if not guestSphereModeEnabled or not guestShowSphere or not guestHRP then
+        if spherePart then spherePart:Destroy() spherePart = nil end
+        return
+    end
+    local center
+    if guestReverseEnabled then
+        center = guestHRP.Position
+    else
+        local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+        if killersFolder then
+            for _, name in ipairs(guestAimTargets) do
+                local target = killersFolder:FindFirstChild(name)
+                if target and target:FindFirstChild("HumanoidRootPart") then
+                    center = target.HumanoidRootPart.Position
+                    break
+                end
+            end
+        end
+        if not center then
+            if spherePart then spherePart:Destroy() spherePart = nil end
+            return
+        end
+    end
+    if not spherePart then
+        spherePart = Instance.new("Part")
+        spherePart.Anchored = true
+        spherePart.CanCollide = false
+        spherePart.Shape = Enum.PartType.Ball
+        spherePart.Transparency = 0.4
+        spherePart.Color = Color3.fromRGB(0, 255, 0)
+        spherePart.Material = Enum.Material.ForceField
+        spherePart.Parent = workspaceService
+    end
+    local radius = guestSphereSize
+    spherePart.Size = Vector3.new(radius*2, radius*2, radius*2)
+    spherePart.CFrame = CFrame.new(center)
+end
+
+local function updateHDTRange()
+    if not guestShowHDTRange or not guestHRP then
+        if hdtRangePart then hdtRangePart:Destroy() hdtRangePart = nil end
+        return
+    end
+    if not hdtRangePart then
+        hdtRangePart = Instance.new("Part")
+        hdtRangePart.Anchored = true
+        hdtRangePart.CanCollide = false
+        hdtRangePart.Shape = Enum.PartType.Ball
+        hdtRangePart.Transparency = 0.5
+        hdtRangePart.Color = Color3.fromRGB(255, 255, 0)
+        hdtRangePart.Material = Enum.Material.ForceField
+        hdtRangePart.Parent = workspaceService
+    end
+    local radius = guestHitboxTriggerRadius
+    hdtRangePart.Size = Vector3.new(radius*2, radius*2, radius*2)
+    hdtRangePart.CFrame = CFrame.new(guestHRP.Position)
+end
+
+local function updatePingChecker()
+    if not pingCheckerEnabled then
+        if pingLabel then pingLabel.Parent.Parent:Destroy() pingLabel = nil end
+        return
+    end
+    if not pingLabel then
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "PingChecker"
+        screenGui.Parent = PlayerGui
+        screenGui.IgnoreGuiInset = true
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        screenGui.DisplayOrder = 9998
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(0, 150, 0, 40)
+        frame.Position = UDim2.new(0, 10, 1, -50)
+        frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        frame.BackgroundTransparency = 0.5
+        frame.BorderSizePixel = 0
+        frame.Parent = screenGui
+        Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, -10, 1, -10)
+        textLabel.Position = UDim2.new(0, 5, 0, 5)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        textLabel.Text = "Ping: 0ms"
+        textLabel.Font = Enum.Font.GothamBold
+        textLabel.TextSize = 18
+        textLabel.Parent = frame
+        pingLabel = textLabel
+    end
+    local ping = statsService.Network.ServerStatsItem["Data Ping"]:GetValue()
+    pingLabel.Text = "Ping: " .. math.floor(ping) .. "ms"
+end
+
+local function guestAttemptBlock(killerModel)
+    if not guestAutoBlockAudioOn then return end
+    local t = tick()
+    if t < guestLastBlockTime + guestBlockCooldown then return end
+    if not isBlockReady() then return end
+    local myChar = clientPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot or not killerModel then return end
+    local killerHRP = killerModel:FindFirstChild("HumanoidRootPart")
+    if not killerHRP then return end
+    task.delay(guestBlockDelay, function()
+        local stillValid = myChar and myChar:FindFirstChild("HumanoidRootPart") and killerModel and killerModel.Parent
+        if not stillValid then return end
+        if not isBlockReady() then return end
+        local shouldBlock = false
+        if guestUseBlockBox then
+            if guestReverseEnabled then
+                if blockBoxPart and isPointInsidePart(blockBoxPart, killerHRP.Position) then
+                    shouldBlock = true
+                end
+            else
+                if blockBoxPart and isPointInsidePart(blockBoxPart, myRoot.Position) then
+                    shouldBlock = true
+                end
+            end
+        elseif guestSphereModeEnabled then
+            local dist
+            if guestReverseEnabled then
+                dist = (killerHRP.Position - myRoot.Position).Magnitude
+            else
+                dist = (myRoot.Position - killerHRP.Position).Magnitude
+            end
+            if dist <= guestSphereSize then
+                shouldBlock = true
+            end
+        else
+            local dist = (killerHRP.Position - myRoot.Position).Magnitude
+            if dist <= guestDetectionRange then
+                shouldBlock = true
+            end
+        end
+        if shouldBlock then
+            if guestHitboxDraggingOn then
+                local distToKiller = (killerHRP.Position - myRoot.Position).Magnitude
+                if distToKiller <= guestHitboxTriggerRadius then
+                    guestPerformHitboxDrag(killerModel)
+                end
+            end
+            guestFireRemoteBlock()
+            guestLastBlockTime = tick()
+            if guestAutoPunchOn then task.delay(guestAutoPunchDelay, guestFireRemotePunch) end
+            showCinematicText()
+        end
+    end)
+end
+-- Part 7/10
+local function guestAttemptBlockForSound(sound, preId)
+    if not guestAutoBlockAudioOn then return end
+    if not sound or not sound:IsA("Sound") then return end
+    local id = preId or guestExtractNumericSoundId(sound)
+    if not id or not guestAutoBlockTriggerSounds[id] then return end
+    local t = tick()
+    if guestSoundBlockedUntil[sound] and t < guestSoundBlockedUntil[sound] then return end
+    if t < guestLastBlockTime + guestBlockCooldown then return end
+    local myChar = clientPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+    local _, soundPart = guestGetSoundWorldPosition(sound)
+    if not soundPart then return end
+    local killerModel = guestGetCharacterFromDescendant(soundPart)
+    if not killerModel then return end
+    local hrp = killerModel:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    if not guestUseBlockBox and not guestSphereModeEnabled then
+        local distSq = (hrp.Position - myRoot.Position).Magnitude^2
+        local pingComp = 0.2 * guestDetectionRange
+        if distSq > guestDetectionRangeSq + pingComp then return end
+        if guestVerifyFacingCheckOn then
+            local success, result = pcall(function()
+                local dirToPlayer = (myRoot.Position - hrp.Position).Unit
+                local dot = hrp.CFrame.LookVector:Dot(dirToPlayer)
+                local cosAngle = math.cos(math.rad(guestVisionAngle / 2))
+                local close = distSq < 25
+                return close or dot >= cosAngle
+            end)
+            if not success or not result then return end
+        end
+    end
+    if guestBetterDetectionEnabled then
+    else
+        guestAttemptBlock(killerModel)
+    end
+    guestSoundBlockedUntil[sound] = t + guestSoundBlockDuration
+end
+
+local function guestHookSound(sound)
+    if not sound or not sound:IsA("Sound") or guestSoundHooks[sound] then return end
+    local preId = guestExtractNumericSoundId(sound)
+    if not preId then return end
+    local playedConn = sound.Played:Connect(function() if guestAutoBlockAudioOn then task.spawn(guestAttemptBlockForSound, sound, preId) end end)
+    local propConn = sound:GetPropertyChangedSignal("IsPlaying"):Connect(function() if sound.IsPlaying and guestAutoBlockAudioOn then task.spawn(guestAttemptBlockForSound, sound, preId) end end)
+    local destroyConn = sound.Destroying:Connect(function()
+        pcall(function() playedConn:Disconnect() propConn:Disconnect() destroyConn:Disconnect() end)
+        guestSoundHooks[sound] = nil
+        guestSoundBlockedUntil[sound] = nil
+    end)
+    guestSoundHooks[sound] = {playedConn, propConn, destroyConn, id = preId}
+    if sound.IsPlaying then task.spawn(guestAttemptBlockForSound, sound, preId) end
+end
+
+local function guestHookExistingSounds()
+    local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+    if killersFolder then
+        for _, killer in pairs(killersFolder:GetChildren()) do
+            for _, desc in pairs(killer:GetDescendants()) do
+                if desc:IsA("Sound") then pcall(guestHookSound, desc) end
+            end
+        end
+    end
+end
+
+local function guestSetupSoundHooks()
+    local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+    if killersFolder then
+        guestHookExistingSounds()
+        killersFolder.DescendantAdded:Connect(function(desc) if desc:IsA("Sound") then pcall(guestHookSound, desc) end end)
+    end
+end
+
+runService.RenderStepped:Connect(function(dt)
+    local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+    if not killersFolder then return end
+    for _, killer in ipairs(killersFolder:GetChildren()) do
+        local hrp = killer:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local state = guestKillerState[killer] or {prevPos = hrp.Position, prevLook = hrp.CFrame.LookVector, vel = Vector3.new(), angVel = 0}
+            local newVel = (hrp.Position - state.prevPos) / math.max(dt, 1e-6)
+            state.vel = state.vel:Lerp(newVel, SMOOTHING_LERP)
+            local look = hrp.CFrame.LookVector
+            local dot = math.clamp(state.prevLook:Dot(look), -1, 1)
+            local angle = math.acos(dot)
+            local crossY = state.prevLook:Cross(look).Y
+            local angSign = crossY >= 0 and 1 or -1
+            local newAngVel = (angle / math.max(dt, 1e-6)) * angSign
+            state.angVel = state.angVel * (1 - SMOOTHING_LERP) + newAngVel * SMOOTHING_LERP
+            state.prevPos = hrp.Position
+            state.prevLook = look
+            guestKillerState[killer] = state
+        end
+    end
+end)
+
+local function guestSetupCharacter(char)
+    guestHumanoid = char:FindFirstChild("Humanoid")
+    guestHRP = char:FindFirstChild("HumanoidRootPart")
+    if guestAimConnection then guestAimConnection:Disconnect() guestAimConnection = nil end
+    local animator = guestHumanoid and guestHumanoid:FindFirstChildOfClass("Animator")
+    if animator and guestAimPunchActive then
+        guestAimConnection = animator.AnimationPlayed:Connect(function(track)
+            local animId = track.Animation.AnimationId:match("%d+")
+            if guestAimPunchActive and guestTrackedPunchAnimations[animId] then
+                guestPunchLastTriggerTime = tick()
+                guestPunchAiming = true
+            end
+        end)
+    end
+end
+
+guestSetupSoundHooks()
+playersService.LocalPlayer.CharacterAdded:Connect(function(char) task.delay(0.5, function() guestCleanupVisionCone() guestSetupCharacter(char) end) end)
+if clientPlayer.Character then guestSetupCharacter(clientPlayer.Character) end
+-- Part 8/10
+local guestCenterPart, guestLeftPart, guestRightPart, guestLeftToKillerPart, guestRightToKillerPart, guestLeftToCenterPart, guestCenterToRightPart = nil, nil, nil, nil, nil, nil, nil
+
+local function guestCreateVisionPart()
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(1,1,1)
+    part.Shape = Enum.PartType.Ball
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 0.5
+    part.Color = Color3.fromRGB(255,0,0)
+    part.Parent = workspaceService
+    return part
+end
+
+local function guestCreateConnectionPart()
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(0.1,0.1,1)
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 0.3
+    part.Color = Color3.fromRGB(255,0,0)
+    part.Parent = workspaceService
+    return part
+end
+
+local function guestCleanupVisionCone()
+    if guestCenterPart then guestCenterPart:Destroy() guestCenterPart = nil end
+    if guestLeftPart then guestLeftPart:Destroy() guestLeftPart = nil end
+    if guestRightPart then guestRightPart:Destroy() guestRightPart = nil end
+    if guestLeftToKillerPart then guestLeftToKillerPart:Destroy() guestLeftToKillerPart = nil end
+    if guestRightToKillerPart then guestRightToKillerPart:Destroy() guestRightToKillerPart = nil end
+    if guestLeftToCenterPart then guestLeftToCenterPart:Destroy() guestLeftToCenterPart = nil end
+    if guestCenterToRightPart then guestCenterToRightPart:Destroy() guestCenterToRightPart = nil end
+end
+
+local function guestUpdateVisionCone()
+    if not guestLegacyShowVisionRange then
+        if guestCenterPart then guestCleanupVisionCone() end
+        return
+    end
+    local myChar = clientPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then guestCleanupVisionCone() return end
+    local originHRP
+    if guestReverseEnabled then
+        originHRP = myRoot
+    else
+        local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+        if not killersFolder then guestCleanupVisionCone() return end
+        for _, name in ipairs(guestAimTargets) do
+            local target = killersFolder:FindFirstChild(name)
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                originHRP = target.HumanoidRootPart
+                break
+            end
+        end
+        if not originHRP then guestCleanupVisionCone() return end
+    end
+    local fwd = originHRP.CFrame.LookVector
+    local halfAngleRad = math.rad(guestLegacyVisionAngle / 2)
+    local right = Vector3.new(-fwd.Z, 0, fwd.X).Unit
+    local leftDir = (fwd * math.cos(halfAngleRad) + right * math.sin(halfAngleRad)).Unit
+    local rightDir = (fwd * math.cos(halfAngleRad) - right * math.sin(halfAngleRad)).Unit
+    local centerPos = originHRP.Position + fwd * guestLegacyVisionRange
+    local leftPos = originHRP.Position + leftDir * guestLegacyVisionRange
+    local rightPos = originHRP.Position + rightDir * guestLegacyVisionRange
+    if not guestCenterPart then guestCenterPart = guestCreateVisionPart() end
+    if not guestLeftPart then guestLeftPart = guestCreateVisionPart() end
+    if not guestRightPart then guestRightPart = guestCreateVisionPart() end
+    guestCenterPart.Position = centerPos
+    guestLeftPart.Position = leftPos
+    guestRightPart.Position = rightPos
+    if not guestLeftToKillerPart then guestLeftToKillerPart = guestCreateConnectionPart() end
+    if not guestRightToKillerPart then guestRightToKillerPart = guestCreateConnectionPart() end
+    if not guestLeftToCenterPart then guestLeftToCenterPart = guestCreateConnectionPart() end
+    if not guestCenterToRightPart then guestCenterToRightPart = guestCreateConnectionPart() end
+    local function updateLine(part, p1, p2)
+        local mid = (p1 + p2) / 2
+        local dist = (p2 - p1).Magnitude
+        part.Size = Vector3.new(0.1, 0.1, dist)
+        part.CFrame = CFrame.new(mid, p2)
+    end
+    updateLine(guestLeftToKillerPart, originHRP.Position, leftPos)
+    updateLine(guestRightToKillerPart, originHRP.Position, rightPos)
+    updateLine(guestLeftToCenterPart, leftPos, centerPos)
+    updateLine(guestCenterToRightPart, centerPos, rightPos)
+end
+
+runService.RenderStepped:Connect(function()
+    if guestAimPunchActive and guestHumanoid and guestHRP and guestPunchAiming then
+        local elapsed = tick() - guestPunchLastTriggerTime
+        if elapsed > guestAimPunchDuration then
+            guestPunchAiming = false
+            if guestOriginalWS then
+                guestHumanoid.WalkSpeed = guestOriginalWS
+                guestHumanoid.JumpPower = guestOriginalJP
+                guestHumanoid.AutoRotate = guestOriginalAutoRotate
+                guestOriginalWS, guestOriginalJP, guestOriginalAutoRotate = nil, nil, nil
+            end
+            return
+        end
+        if not guestOriginalWS then
+            guestOriginalWS = guestHumanoid.WalkSpeed
+            guestOriginalJP = guestHumanoid.JumpPower
+            guestOriginalAutoRotate = guestHumanoid.AutoRotate
+        end
+        guestHumanoid.AutoRotate = false
+        guestHRP.AssemblyAngularVelocity = Vector3.zero
+        local targetHRP = guestGetValidTarget()
+        if targetHRP then
+            local predictPos = targetHRP.Velocity.Magnitude > 0.5 and (targetHRP.Position + targetHRP.Velocity * (guestPunchPrediction / 60)) or targetHRP.Position
+            local dir = (predictPos - guestHRP.Position).Unit
+            local yaw = math.atan2(-dir.X, -dir.Z)
+            guestHRP.CFrame = CFrame.new(guestHRP.Position) * CFrame.Angles(0, yaw, 0)
+        end
+    end
+    local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+    if killersFolder then
+        for _, name in ipairs(guestAimTargets) do
+            local target = killersFolder:FindFirstChild(name)
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                local killerHRP = target.HumanoidRootPart
+                updateBlockBox(killerHRP)
+                break
+            end
+        end
+    end
+    updateSphere()
+    updateHDTRange()
+    pcall(guestUpdateVisionCone)
+    pcall(updatePingChecker)
+    pcall(updateHDTCooldownChecker)
+    if fpsCounterEnabled and fpsGui and fpsLabel then
+        frameCount = frameCount + 1
+        local now = tick()
+        if now - lastFpsUpdate >= 1 then
+            fps = frameCount
+            frameCount = 0
+            lastFpsUpdate = now
+            fpsLabel.Text = "FPS: " .. fps
+        end
+    end
+end)
+
+local function guestGetValidTarget()
+    local killersFolder = workspaceService:FindFirstChild("Players") and workspaceService.Players:FindFirstChild("Killers")
+    if killersFolder then
+        for _, name in ipairs(guestAimTargets) do
+            local target = killersFolder:FindFirstChild(name)
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                return target.HumanoidRootPart, target:FindFirstChild("Humanoid")
+            end
+        end
+    end
+    return nil, nil
+end
+-- Part 9/10
+local function enableNoclip()
+    if not clientPlayer.Character then return end
+    if noclipConn then noclipConn:Disconnect() end
+    noclipConn = runService.Stepped:Connect(function(_, _)
+        if not noclipEnabled then
+            noclipConn:Disconnect()
+            noclipConn = nil
+            return
+        end
+        if noclipOnlyWhenBlockReady and not isBlockReady() then
+            return
+        end
+        if not clientPlayer.Character then return end
+        for _, part in ipairs(clientPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end)
+end
+
+local function disableNoclip()
+    if noclipConn then
+        noclipConn:Disconnect()
+        noclipConn = nil
+    end
+    local char = clientPlayer.Character
+    if char then
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
+            end
+        end
+    end
+end
+
+clientPlayer.CharacterAdded:Connect(function()
+    if noclipEnabled then
+        enableNoclip()
+    end
+end)
+
+local function createFpsCounter()
+    if fpsGui then fpsGui:Destroy() end
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "FpsCounter"
+    screenGui.Parent = PlayerGui
+    screenGui.IgnoreGuiInset = true
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.DisplayOrder = 9999
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 100, 0, 30)
+    frame.Position = UDim2.new(0, 10, 0, 150)
+    frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    frame.BackgroundTransparency = 0.5
+    frame.BorderSizePixel = 0
+    frame.Parent = screenGui
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, -10, 1, -10)
+    textLabel.Position = UDim2.new(0, 5, 0, 5)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.Text = "FPS: 0"
+    textLabel.Font = Enum.Font.GothamBold
+    textLabel.TextSize = 16
+    textLabel.Parent = frame
+    fpsGui = screenGui
+    fpsLabel = textLabel
+    lastFpsUpdate = tick()
+    frameCount = 0
+    fps = 0
+end
+
+local function destroyFpsCounter()
+    if fpsGui then
+        fpsGui:Destroy()
+        fpsGui = nil
+        fpsLabel = nil
+    end
+end
+
+local function hookNetwork()
+    if networkHooked then return end
+    pcall(function()
+        local Network = require(replicatedStorage.Modules.Network)
+        originalFireConnection = Network.FireConnection
+        Network.FireConnection = function(self, name, ...)
+            if punchMobilityEnabled and name == "DisableSprinting" then return end
+            return originalFireConnection(self, name, ...)
+        end
+        networkHooked = true
+    end)
+end
+
+local function unhookNetwork()
+    if not networkHooked then return end
+    pcall(function()
+        local Network = require(replicatedStorage.Modules.Network)
+        if originalFireConnection then
+            Network.FireConnection = originalFireConnection
+        end
+    end)
+    networkHooked = false
+    originalFireConnection = nil
+end
+
+local function pinValue(v)
+    if not v or not v:IsA("NumberValue") then return end
+    if v.Value > 1.01 then return end
+    pcall(function()
+        v.Value = 1
+        tweenService:Create(v, TweenInfo.new(0), {Value = 1}):Play()
+    end)
+    local conn
+    conn = v:GetPropertyChangedSignal("Value"):Connect(function()
+        if not punchMobilityEnabled then
+            pcall(function() conn:Disconnect() end)
+            return
+        end
+        if v.Value < 1 then
+            pcall(function() v.Value = 1 end)
+        end
+    end)
+    table.insert(pinnedConns, conn)
+end
+
+local function stopPunchOverride()
+    pcall(function() runService:UnbindFromRenderStep("PunchMobility") end)
+    pcall(function() runService:UnbindFromRenderStep("LungeBoost") end)
+    lungeActive = false
+    for _, conn in pairs(pinnedConns) do
+        pcall(function() conn:Disconnect() end)
+    end
+    pinnedConns = {}
+    if descendantConn then
+        descendantConn:Disconnect()
+        descendantConn = nil
+    end
+    if lungeThread then
+        task.cancel(lungeThread)
+        lungeThread = nil
+    end
+end
+
+local function startPunchOverride()
+    stopPunchOverride()
+    local char = clientPlayer.Character
+    if not char then return end
+    for _, desc in ipairs(char:GetDescendants()) do
+        if desc:IsA("NumberValue") then pinValue(desc) end
+    end
+    descendantConn = char.DescendantAdded:Connect(function(desc)
+        if not punchMobilityEnabled then return end
+        if desc:IsA("NumberValue") then
+            task.defer(function()
+                if desc.Name == "PunchAbility" then
+                    local parry = isParryMode()
+                    if lungeBoostEnabled then
+                        if lungeThread then task.cancel(lungeThread) end
+                        local delay = parry and PARRY_WINDUP or PUNCH_WINDUP
+                        lungeThread = task.delay(delay, function()
+                            lungeThread = nil
+                            applyLunge()
+                        end)
+                    end
+                end
+                pinValue(desc)
+            end)
+        end
+    end)
+    runService:BindToRenderStep("PunchMobility", Enum.RenderPriority.Character.Value + 10, function()
+        if lungeActive then return end
+        local hum = getHumanoid()
+        if not hum then return end
+        if hum.WalkSpeed < BASE_SPEED then hum.WalkSpeed = BASE_SPEED end
+    end)
+end
+-- Part 10/10
+local function applyLunge()
+    if not lungeBoostEnabled then return end
+    if lungeActive then return end
+    local rootPart = getRootPart()
+    if not rootPart then return end
+    local lv = rootPart.CFrame.LookVector
+    local dir = Vector3.new(lv.X, 0, lv.Z)
+    if dir.Magnitude == 0 then return end
+    dir = dir.Unit
+    lungeActive = true
+    local speed = BASE_PUNCH_FORCE * lungeMultiplier
+    local DURATION = 0.3
+    local elapsed = 0
+    pcall(function() runService:UnbindFromRenderStep("LungeBoost") end)
+    runService:BindToRenderStep("LungeBoost", Enum.RenderPriority.Character.Value + 20, function(dt)
+        elapsed = elapsed + dt
+        local rp = getRootPart()
+        if not rp or elapsed >= DURATION then
+            pcall(function() runService:UnbindFromRenderStep("LungeBoost") end)
+            lungeActive = false
+            return
+        end
+        local t = 1 - (elapsed / DURATION)
+        local currentY = rp.AssemblyLinearVelocity.Y
+        rp.AssemblyLinearVelocity = dir * (speed * t) + Vector3.new(0, currentY, 0)
+    end)
+end
+
+local function pinChargeValue(v)
+    if not v or not v:IsA("NumberValue") then return end
+    if v.Value <= 1.01 then return end
+    pcall(function()
+        v.Value = 1
+        tweenService:Create(v, TweenInfo.new(0), {Value = 1}):Play()
+    end)
+    local conn
+    conn = v:GetPropertyChangedSignal("Value"):Connect(function()
+        if not isCharging or not chargeSpeedCapEnabled then
+            pcall(function() conn:Disconnect() end)
+            return
+        end
+        if v.Value > 1 then
+            pcall(function() v.Value = 1 end)
+        end
+    end)
+    table.insert(chargePinnedConns, conn)
+end
+
+local function startChargeCap()
+    if chargeCapConn then chargeCapConn:Disconnect() end
+    for _, c in pairs(chargePinnedConns) do pcall(function() c:Disconnect() end) end
+    chargePinnedConns = {}
+    local char = clientPlayer.Character
+    if not char then return end
+    for _, desc in ipairs(char:GetDescendants()) do
+        pinChargeValue(desc)
+    end
+    chargeCapConn = char.DescendantAdded:Connect(function(desc)
+        if not isCharging or not chargeSpeedCapEnabled then return end
+        if desc:IsA("NumberValue") then
+            task.defer(function() pinChargeValue(desc) end)
+        end
+    end)
+    pcall(function() runService:UnbindFromRenderStep("ChargeCap") end)
+    runService:BindToRenderStep("ChargeCap", Enum.RenderPriority.Character.Value + 20, function()
+        if not isCharging or not chargeSpeedCapEnabled then
+            pcall(function() runService:UnbindFromRenderStep("ChargeCap") end)
+            return
+        end
+        local hum = getHumanoid()
+        if hum and hum.WalkSpeed > BASE_SPEED then
+            hum.WalkSpeed = BASE_SPEED
+        end
+    end)
+end
+
+local function stopChargeCap()
+    pcall(function() runService:UnbindFromRenderStep("ChargeCap") end)
+    if chargeCapConn then chargeCapConn:Disconnect() end
+    for _, c in pairs(chargePinnedConns) do pcall(function() c:Disconnect() end) end
+    chargePinnedConns = {}
+end
+
+local function startLock()
+    pcall(function() runService:UnbindFromRenderStep("ChargeLock") end)
+    pcall(function() runService:UnbindFromRenderStep("ChargeSpeedLimit") end)
+    isCharging = true
+    runService:BindToRenderStep("ChargeLock", Enum.RenderPriority.Character.Value + 2, function()
+        local hum = getHumanoid()
+        if not hum then return end
+        local cam = workspaceService.CurrentCamera.CFrame.LookVector
+        local dir = Vector3.new(cam.X, 0, cam.Z)
+        if dir.Magnitude > 0 then hum:Move(dir.Unit) end
+    end)
+    runService:BindToRenderStep("ChargeSpeedLimit", Enum.RenderPriority.Character.Value + 20, function()
+        if not isCharging then
+            pcall(function() runService:UnbindFromRenderStep("ChargeSpeedLimit") end)
+            return
+        end
+        local hum = getHumanoid()
+        if hum and hum.WalkSpeed ~= chargeSpeedLimit then
+            hum.WalkSpeed = chargeSpeedLimit
+        end
+    end)
+    if chargeSpeedCapEnabled then startChargeCap() end
+end
+
+local function stopLock()
+    isCharging = false
+    pcall(function() runService:UnbindFromRenderStep("ChargeLock") end)
+    pcall(function() runService:UnbindFromRenderStep("ChargeSpeedLimit") end)
+    stopChargeCap()
+end
+
+local function setupChargeWatcher(character)
+    if chargeWatcher then chargeWatcher:Disconnect() end
+    stopLock()
+    stopPunchOverride()
+    chargeWatcher = character:GetAttributeChangedSignal("GuestCharging"):Connect(function()
+        if not chargeControlEnabled then return end
+        if character:GetAttribute("GuestCharging") then
+            startLock()
+        else
+            stopLock()
+        end
+    end)
+end
+
+if clientPlayer.Character then setupChargeWatcher(clientPlayer.Character) end
+clientPlayer.CharacterAdded:Connect(function(character)
+    task.wait()
+    setupChargeWatcher(character)
+end)
+
+if punchMobilityEnabled then
+    hookNetwork()
+    startPunchOverride()
+end
+
+local SentinelTab = Window:CreateTab("Sentinel", 4483362458)
+SentinelTab:CreateToggle({ Name = "Auto Block", CurrentValue = guestAutoBlockAudioOn, Flag = "AutoBlock", Callback = function(v) guestAutoBlockAudioOn = v; cfg.set("guestAutoBlockAudioOn", v) end })
+SentinelTab:CreateSlider({ Name = "Block Delay", Range = {0, 2}, Increment = 0.05, Suffix = "s", CurrentValue = guestBlockDelay, Flag = "BlockDelay", Callback = function(v) guestBlockDelay = v; cfg.set("guestBlockDelay", v) end })
+SentinelTab:CreateSlider({ Name = "Auto Block Radius", Range = {1, 50}, Increment = 1, Suffix = "studs", CurrentValue = guestDetectionRange, Flag = "BlockRadius", Callback = function(v) guestDetectionRange = v; guestDetectionRangeSq = v*v; cfg.set("guestDetectionRange", v) end })
+SentinelTab:CreateDivider()
+SentinelTab:CreateToggle({ Name = "Hitbox Dragging (HDT)", CurrentValue = guestHitboxDraggingOn, Flag = "HDT", Callback = function(v) guestHitboxDraggingOn = v; cfg.set("guestHitboxDraggingOn", v) end })
+SentinelTab:CreateDropdown({ Name = "HDT Mode", Options = {"Blatant","Legit","Hitbox"}, CurrentOption = guestHitboxMode, Flag = "HDTMode", Callback = function(v) guestHitboxMode = v[1]; cfg.set("guestHitboxMode", v[1]) end })
+SentinelTab:CreateToggle({ Name = "Face Killer During HDT", CurrentValue = guestHitboxFaceKiller, Flag = "FaceKiller", Callback = function(v) guestHitboxFaceKiller = v; cfg.set("guestHitboxFaceKiller", v) end })
+SentinelTab:CreateToggle({ Name = "HDT Visual (Beam)", CurrentValue = guestHitboxVisual, Flag = "HDTVisual", Callback = function(v) guestHitboxVisual = v; cfg.set("guestHitboxVisual", v) end })
+SentinelTab:CreateSlider({ Name = "Drag Duration", Range = {0.05,2}, Increment = 0.05, Suffix = "s", CurrentValue = guestHitboxDragDuration, Flag = "DragDuration", Callback = function(v) guestHitboxDragDuration = v; cfg.set("guestHitboxDragDuration", v) end })
+SentinelTab:CreateSlider({ Name = "HDT Speed", Range = {50,300}, Increment = 10, Suffix = "% boost", CurrentValue = guestHitboxDragSpeed, Flag = "HDTSpeed", Callback = function(v) guestHitboxDragSpeed = v; cfg.set("guestHitboxDragSpeed", v) end })
+SentinelTab:CreateSlider({ Name = "HDT Trigger Radius", Range = {0,30}, Increment = 1, Suffix = "studs", CurrentValue = guestHitboxTriggerRadius, Flag = "HDTTriggerRadius", Callback = function(v) guestHitboxTriggerRadius = v; cfg.set("guestHitboxTriggerRadius", v) end })
+SentinelTab:CreateToggle({ Name = "Show HDT Range", CurrentValue = guestShowHDTRange, Flag = "ShowHDTRange", Callback = function(v) guestShowHDTRange = v; cfg.set("guestShowHDTRange", v) end })
+SentinelTab:CreateToggle({ Name = "No HDT Cooldown", CurrentValue = noHDTCooldown, Flag = "NoHDTCooldown", Callback = function(v) noHDTCooldown = v; cfg.set("noHDTCooldown", v) end })
+SentinelTab:CreateToggle({ Name = "HDT Cooldown Checker", CurrentValue = hdtCooldownChecker, Flag = "HDTCooldownChecker", Callback = function(v) hdtCooldownChecker = v; cfg.set("hdtCooldownChecker", v) end })
+SentinelTab:CreateDropdown({
+    Name = "HDT Target",
+    Options = {"Root", "Arms", "Random"},
+    CurrentOption = guestHitboxTargetMode,
+    Flag = "HDTTarget",
+    Callback = function(v)
+        guestHitboxTargetMode = v[1]
+        cfg.set("guestHitboxTargetMode", v[1])
+    end
+})
+SentinelTab:CreateToggle({
+    Name = "Noclip Only When Block Ready",
+    CurrentValue = noclipOnlyWhenBlockReady,
+    Flag = "NoclipBlockReady",
+    Callback = function(v)
+        noclipOnlyWhenBlockReady = v
+        cfg.set("noclipOnlyWhenBlockReady", v)
+        if noclipEnabled then
+            disableNoclip()
+            enableNoclip()
+        end
+    end
+})
+SentinelTab:CreateDivider()
+SentinelTab:CreateToggle({ Name = "Use Block Box", CurrentValue = guestUseBlockBox, Flag = "UseBlockBox", Callback = function(v) if v and guestSphereModeEnabled then Rayfield:Notify({Title="Mode Conflict", Content="Sphere Mode disabled.", Duration=3}) guestSphereModeEnabled = false cfg.set("guestSphereModeEnabled", false) end guestUseBlockBox = v cfg.set("guestUseBlockBox", v) end })
+SentinelTab:CreateSlider({ Name = "Box Size X", Range = {1,50}, Increment = 0.5, Suffix = "", CurrentValue = guestBlockBoxSizeX, Flag = "BoxSizeX", Callback = function(v) guestBlockBoxSizeX = v; cfg.set("guestBlockBoxSizeX", v) end })
+SentinelTab:CreateSlider({ Name = "Box Size Y", Range = {1,10}, Increment = 0.5, Suffix = "", CurrentValue = guestBlockBoxSizeY, Flag = "BoxSizeY", Callback = function(v) guestBlockBoxSizeY = v; cfg.set("guestBlockBoxSizeY", v) end })
+SentinelTab:CreateSlider({ Name = "Box Size Z", Range = {1,50}, Increment = 0.5, Suffix = "", CurrentValue = guestBlockBoxSizeZ, Flag = "BoxSizeZ", Callback = function(v) guestBlockBoxSizeZ = v; cfg.set("guestBlockBoxSizeZ", v) end })
+SentinelTab:CreateToggle({ Name = "Z Forward Only", CurrentValue = guestBoxZForwardOnly, Flag = "ZForwardOnly", Callback = function(v) guestBoxZForwardOnly = v; cfg.set("guestBoxZForwardOnly", v) end })
+SentinelTab:CreateToggle({ Name = "Show Block Box", CurrentValue = guestShowBlockBox, Flag = "ShowBlockBox", Callback = function(v) guestShowBlockBox = v; cfg.set("guestShowBlockBox", v) end })
+SentinelTab:CreateToggle({ Name = "Expand Box on Trigger", CurrentValue = guestExpandBoxOnTrigger, Flag = "ExpandBox", Callback = function(v) guestExpandBoxOnTrigger = v; cfg.set("guestExpandBoxOnTrigger", v) end })
+SentinelTab:CreateDivider()
+SentinelTab:CreateToggle({ Name = "Verify Facing Check", CurrentValue = guestVerifyFacingCheckOn, Flag = "VerifyFacing", Callback = function(v) guestVerifyFacingCheckOn = v; cfg.set("guestVerifyFacingCheckOn", v) end })
+SentinelTab:CreateSlider({ Name = "Vision Range", Range = {1,20}, Increment = 1, Suffix = "studs", CurrentValue = guestVisionRange, Flag = "VisionRange", Callback = function(v) guestVisionRange = v; cfg.set("guestVisionRange", v) end })
+SentinelTab:CreateSlider({ Name = "Vision Angle", Range = {1,200}, Increment = 1, Suffix = "°", CurrentValue = guestVisionAngle, Flag = "VisionAngle", Callback = function(v) guestVisionAngle = v; cfg.set("guestVisionAngle", v) end })
+SentinelTab:CreateDivider()
+SentinelTab:CreateToggle({ Name = "Auto Punch", CurrentValue = guestAutoPunchOn, Flag = "AutoPunch", Callback = function(v) guestAutoPunchOn = v; cfg.set("guestAutoPunchOn", v) end })
+SentinelTab:CreateToggle({ Name = "Aim Punch", CurrentValue = guestAimPunchActive, Flag = "AimPunch", Callback = function(v) guestAimPunchActive = v; cfg.set("guestAimPunchActive", v) if v and clientPlayer.Character then guestSetupCharacter(clientPlayer.Character) end end })
+SentinelTab:CreateSlider({ Name = "Punch Prediction", Range = {0,10}, Increment = 1, Suffix = "", CurrentValue = guestPunchPrediction, Flag = "PunchPred", Callback = function(v) guestPunchPrediction = v; cfg.set("guestPunchPrediction", v) end })
+SentinelTab:CreateToggle({ Name = "Cinematic Text", CurrentValue = guestCinematicTextEnabled, Flag = "Cinematic", Callback = function(v) guestCinematicTextEnabled = v; cfg.set("guestCinematicTextEnabled", v) end })
+SentinelTab:CreateInput({ Name = "Cinematic Text", PlaceholderText = guestCinematicText, RemoveTextAfterFocusLost = false, Flag = "CinematicText", Callback = function(v) guestCinematicText = v; cfg.set("guestCinematicText", v) end })
+SentinelTab:CreateToggle({ Name = "Smart Delay", CurrentValue = guestSmartDelayEnabled, Flag = "SmartDelay", Callback = function(v) guestSmartDelayEnabled = v; cfg.set("guestSmartDelayEnabled", v) end })
+SentinelTab:CreateToggle({ Name = "Manual Drag", CurrentValue = guestManualDragEnabled, Flag = "ManualDrag", Callback = function(v) guestManualDragEnabled = v; cfg.set("guestManualDragEnabled", v) end })
+
+local SphereTab = Window:CreateTab("Sphere Block", 4483362458)
+SphereTab:CreateToggle({ Name = "Enable Sphere Mode", CurrentValue = guestSphereModeEnabled, Flag = "SphereMode", Callback = function(v) if v and guestUseBlockBox then Rayfield:Notify({Title="Mode Conflict", Content="Block Box disabled.", Duration=3}) guestUseBlockBox = false cfg.set("guestUseBlockBox", false) end guestSphereModeEnabled = v cfg.set("guestSphereModeEnabled", v) end })
+SphereTab:CreateSlider({ Name = "Sphere Size", Range = {1,20}, Increment = 1, Suffix = "studs", CurrentValue = guestSphereSize, Flag = "SphereSize", Callback = function(v) guestSphereSize = v; cfg.set("guestSphereSize", v) end })
+SphereTab:CreateToggle({ Name = "Show Sphere", CurrentValue = guestShowSphere, Flag = "ShowSphere", Callback = function(v) guestShowSphere = v; cfg.set("guestShowSphere", v) end })
+
+local ReverseTab = Window:CreateTab("Reverse Block", 4483362458)
+ReverseTab:CreateToggle({ Name = "Enable Reverse", CurrentValue = guestReverseEnabled, Flag = "Reverse", Callback = function(v) guestReverseEnabled = v cfg.set("guestReverseEnabled", v) if v and guestLegacyFacingEnabled then Rayfield:Notify({Title="Warning", Content="Reverse with legacy may be risky.", Duration=5}) end end })
+ReverseTab:CreateParagraph({ Title = "Info", Content = "When enabled, block zone centers on you." })
+
+local LegacyTab = Window:CreateTab("Legacy", 4483362458)
+LegacyTab:CreateToggle({ Name = "Enable Legacy Facing", CurrentValue = guestLegacyFacingEnabled, Flag = "LegacyFacing", Callback = function(v) guestLegacyFacingEnabled = v cfg.set("guestLegacyFacingEnabled", v) if v and guestReverseEnabled then Rayfield:Notify({Title="Warning", Content="Reverse with legacy may be risky.", Duration=5}) end end })
+LegacyTab:CreateSlider({ Name = "Vision Range", Range = {1,20}, Increment = 1, Suffix = "studs", CurrentValue = guestLegacyVisionRange, Flag = "LegacyVisionRange", Callback = function(v) guestLegacyVisionRange = v; cfg.set("guestLegacyVisionRange", v) end })
+LegacyTab:CreateSlider({ Name = "Vision Angle", Range = {1,200}, Increment = 1, Suffix = "°", CurrentValue = guestLegacyVisionAngle, Flag = "LegacyVisionAngle", Callback = function(v) guestLegacyVisionAngle = v; cfg.set("guestLegacyVisionAngle", v) end })
+LegacyTab:CreateToggle({ Name = "Show Vision Range", CurrentValue = guestLegacyShowVisionRange, Flag = "LegacyShowVision", Callback = function(v) guestLegacyShowVisionRange = v; cfg.set("guestLegacyShowVisionRange", v) end })
+
+local PingTab = Window:CreateTab("Ping Checker", 4483362458)
+PingTab:CreateToggle({ Name = "Enable Ping Checker", CurrentValue = pingCheckerEnabled, Flag = "PingChecker", Callback = function(v) pingCheckerEnabled = v cfg.set("pingCheckerEnabled", v) if not v and pingLabel then pingLabel.Parent.Parent:Destroy() pingLabel = nil end end })
+PingTab:CreateParagraph({ Title = "Info", Content = "Displays your current ping." })
+
+local PunchTab = Window:CreateTab("Punch Controller", 4483362458)
+PunchTab:CreateToggle({ Name = "Charge Control", CurrentValue = chargeControlEnabled, Flag = "ChargeControl", Callback = function(v) chargeControlEnabled = v cfg.set("chargeControlEnabled", v) if not v then stopLock() end end })
+PunchTab:CreateSlider({ Name = "Charge Speed Limit", Range = {1,50}, Increment = 1, Suffix = "studs/s", CurrentValue = chargeSpeedLimit, Flag = "ChargeSpeedLimit", Callback = function(v) chargeSpeedLimit = v cfg.set("chargeSpeedLimit", v) end })
+PunchTab:CreateToggle({ Name = "Punch Mobility", CurrentValue = punchMobilityEnabled, Flag = "PunchMobility", Callback = function(v) punchMobilityEnabled = v cfg.set("punchMobilityEnabled", v) if v then hookNetwork() startPunchOverride() else unhookNetwork() stopPunchOverride() end end })
+PunchTab:CreateToggle({ Name = "Lunge Boost", CurrentValue = lungeBoostEnabled, Flag = "LungeBoost", Callback = function(v) lungeBoostEnabled = v cfg.set("lungeBoostEnabled", v) if not v then if lungeThread then task.cancel(lungeThread); lungeThread = nil end pcall(function() runService:UnbindFromRenderStep("LungeBoost") end) lungeActive = false end end })
+PunchTab:CreateSlider({ Name = "Lunge Multiplier", Range = {0.5,5.0}, Increment = 0.1, Suffix = "x", CurrentValue = lungeMultiplier, Flag = "LungeMultiplier", Callback = function(v) lungeMultiplier = v cfg.set("lungeMultiplier", v) end })
+PunchTab:CreateToggle({ Name = "Charge Speed Cap", CurrentValue = chargeSpeedCapEnabled, Flag = "ChargeSpeedCap", Callback = function(v) chargeSpeedCapEnabled = v cfg.set("chargeSpeedCapEnabled", v) if isCharging and v then startChargeCap() elseif not v then stopChargeCap() end end })
+
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+MiscTab:CreateToggle({ Name = "Noclip", CurrentValue = noclipEnabled, Flag = "Noclip", Callback = function(v) noclipEnabled = v cfg.set("noclipEnabled", v) if v then enableNoclip() else disableNoclip() end end })
+MiscTab:CreateToggle({ Name = "FPS Counter", CurrentValue = fpsCounterEnabled, Flag = "FPSCounter", Callback = function(v) fpsCounterEnabled = v cfg.set("fpsCounterEnabled", v) if v then createFpsCounter() else destroyFpsCounter() end end })
+
+local InterfaceTab = Window:CreateTab("Interface", 4483362458)
+InterfaceTab:CreateButton({ Name = "Close UI", Callback = function() Rayfield:Destroy() end })
+
+print("V1rpblock 2.0 fully loaded – Enjoy.")
